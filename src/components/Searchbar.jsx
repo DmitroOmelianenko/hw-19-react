@@ -1,13 +1,26 @@
-import React, { useState } from "react";
+import React, { useReducer } from "react";
+
+const initialState = { value: "" };
+
+function reducer(state, action) {
+  switch (action.type) {
+    case "SET_VALUE":
+      return { value: action.payload };
+    case "RESET":
+      return initialState;
+    default:
+      return state;
+  }
+}
 
 function Searchbar({ onSubmit }) {
-  const [value, setValue] = useState("");
+  const [state, dispatch] = useReducer(reducer, initialState);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!value.trim()) return;
-    onSubmit(value);
-    setValue("");
+    if (!state.value.trim()) return;
+    onSubmit(state.value);
+    dispatch({ type: "RESET" });
   };
 
   return (
@@ -19,8 +32,8 @@ function Searchbar({ onSubmit }) {
         <input
           className="input"
           type="text"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
+          value={state.value}
+          onChange={(e) => dispatch({ type: "SET_VALUE", payload: e.target.value })}
           placeholder="Search images and photos"
         />
       </form>
