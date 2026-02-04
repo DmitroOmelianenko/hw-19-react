@@ -1,58 +1,83 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useReducer, useEffect, useCallback, useMemo } from "react";
 import Searchbar from "./components/Searchbar";
 import ImageGallery from "./components/ImageGallery";
 import Button from "./components/Button";
 import Loader from "./components/Loader";
 import Modal from "./components/Modal";
 
-const API_KEY = "53820652-6964ef6fc2797102960f5b7d7"; 
+const API_KEY = "53820652-6964ef6fc2797102960f5b7d7";
+
+const initialState = {
+  query: "",
+  images: [],
+  page: 1,
+  loading: false,
+  showModal: false,
+  largeImage: ""
+};
+
+function reducer(state, action) {
+  switch (action.type) {
+    case "SET_QUERY":
+      return { ...state, query: action.payload, page: 1, images: [] };
+    case "SET_IMAGES":
+      return {
+        ...state,
+        images:
+          state.page === 1 ? action.payload : [...state.images, ...action.payload]
+      };
+    case "NEXT_PAGE":
+      return { ...state, page: state.page + 1 };
+    case "SET_LOADING":
+      return { ...state, loading: action.payload };
+    case "OPEN_MODAL":
+      return { ...state, showModal: true, largeImage: action.payload };
+    case "CLOSE_MODAL":
+      return { ...state, showModal: false, largeImage: "" };
+    default:
+      return state;
+  }
+}
 
 function App() {
-  const [query, setQuery] = useState("");
-  const [images, setImages] = useState([]);
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [showModal, setShowModal] = useState(false);
-  const [largeImage, setLargeImage] = useState("");
+  const [state, dispatch] = useReducer(reducer, initialState);
 
   useEffect(() => {
-    if (!query) return;
-    setLoading(true);
+    if (!state.query) return;
+    dispatch({ type: "SET_LOADING", payload: true });
     fetch(
-      `https://pixabay.com/api/?q=${query}&page=${page}&key=${API_KEY}&image_type=photo&orientation=horizontal&per_page=12`
+      `https://pixabay.com/api/?q=${state.query}&page=${state.page}&key=${API_KEY}&image_type=photo&orientation=horizontal&per_page=12`
     )
       .then((res) => res.json())
       .then((data) => {
-        setImages((prev) => (page === 1 ? data.hits : [...prev, ...data.hits]));
+        dispatch({ type: "SET_IMAGES", payload: data.hits });
       })
-      .finally(() => setLoading(false));
-  }, [query, page]);
-
+      .finally(() => dispatch({ type: "SET_LOADING", payload: false }));
+  }, [state.query, state.page]);
 
   const handleSearch = useCallback((newQuery) => {
-    setQuery(newQuery);
-    setPage(1);
+    dispatch({ type: "SET_QUERY", payload: newQuery });
   }, []);
 
-
-  const memoizedImages = useMemo(() => images, [images]);
+  const memoizedImages = useMemo(() => state.images, [state.images]);
 
   const openModal = useCallback((url) => {
-    setLargeImage(url);
-    setShowModal(true);
+    dispatch({ type: "OPEN_MODAL", payload: url });
   }, []);
 
-  const closeModal = useCallback(() => setShowModal(false), []);
+  const closeModal = useCallback(() => {
+    dispatch({ type: "CLOSE_MODAL" });
+  }, []);
 
   return (
     <div>
       <Searchbar onSubmit={handleSearch} />
       <ImageGallery images={memoizedImages} onImageClick={openModal} />
-      {loading && <Loader />}
-      {images.length > 0 && !loading && (
-        <Button onClick={() => setPage((p) => p + 1)} />
+      {state.loading && <Loader />}
+      {state.images.length > 0 && !state.loading && (
+        <Button onClick={() => dispatch({ type: "NEXT_PAGE" })} />
       )}
-      {showModal && <Modal url={largeImage} onClose={closeModal} />}
+      {state.showModal && <Modal url={state.largeImage} onClose={closeModal} />}
     </div>
   );
 }
