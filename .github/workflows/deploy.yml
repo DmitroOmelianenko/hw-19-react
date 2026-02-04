@@ -3,7 +3,7 @@ name: Deploy React App to GitHub Pages
 on:
   push:
     branches:
-      - main   # деплой буде при пуші у гілку main
+      - main   # деплой запускається при пуші у main
 
 jobs:
   build-and-deploy:
@@ -27,5 +27,9 @@ jobs:
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
+          # Використовує стандартний токен GitHub Actions
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          # Якщо стандартний токен не працює, створи свій PAT і додай як секрет GH_TOKEN
+          # github_token: ${{ secrets.GH_TOKEN }}
           publish_dir: ./build
+          publish_branch: gh-pages
