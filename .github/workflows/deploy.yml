@@ -27,7 +27,6 @@ jobs:
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
-          # Використовує стандартний токен GitHub Actions
           github_token: ${{ secrets.GITHUB_TOKEN }}
           # Якщо стандартний токен не працює, створи свій PAT і додай як секрет GH_TOKEN
           # github_token: ${{ secrets.GH_TOKEN }}
